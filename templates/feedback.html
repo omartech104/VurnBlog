@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+    <h2>Leave Feedback</h2>
+    <form method="GET" action="{{ url_for('feedback') }}">
+        <input type="text" name="name" placeholder="Your Name"><br><br>
+        <textarea name="message" placeholder="Message"></textarea>
+        <button type="submit">Send</button>
+    </form>
+</div>
+
+<div id="response"></div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const name = params.get("name");
+
+    if (name) {
+        // Create the container element
+        const responseDiv = document.getElementById("response");
+        const alertDiv = document.createElement("div");
+        alertDiv.className = "alert alert-success shadow-sm rounded";
+        alertDiv.style.marginTop = "20px";
+        alertDiv.style.fontSize = "1.1rem";
+
+        // Use textContent for the user-provided name to prevent XSS
+        const icon = document.createElement("i");
+        icon.className = "fas fa-check-circle";
+        
+        const textPara = document.createElement("p");
+        textPara.style.color = "var(--white-color)";
+        textPara.textContent = `Thanks, ${name}! for your feedback.`;
+
+        alertDiv.appendChild(icon);
+        alertDiv.appendChild(textPara);
+        responseDiv.appendChild(alertDiv);
+    }
+</script>
+{% endblock %}
