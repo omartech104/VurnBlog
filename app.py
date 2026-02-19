@@ -1,4 +1,3 @@
-from tkinter import SE
 from flask import Flask, render_template, request, redirect, url_for, session, flash, abort, send_file, send_from_directory
 import sqlite3
 import os
@@ -198,14 +197,30 @@ def dashboard():
     
     return render_template('dashboard.html', user=user, posts=posts)
 
-
 @app.route('/profile/<int:user_id>')
 def profile(user_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
     user = get_user_by_id(user_id)
     if not user:
         flash('User not found', 'error')
         return redirect(url_for('dashboard'))
-    return render_template('profile.html', user=user)
+
+    # Only show sensitive fields to the profile owner
+    is_owner = session['user_id'] == user_id
+
+    # Sanitize profile photo filename to prevent path traversal
+    user_list = list(user)
+    user_list[5] = secure_filename(user_list[5]) if user_list[5] else None
+
+    if not is_owner:
+        # Hide email and phone from other users
+        user_list[2] = None  # email
+        user_list[4] = None  # phone
+
+    user = tuple(user_list)
+    return render_template('profile.html', user=user, is_owner=is_owner)
 
 @app.route('/upload', methods=['POST'])
 @csrf.exempt
