@@ -120,10 +120,10 @@ def update_password(user_id, new_password):
 
 def create_user(username, email, password, phone):
     conn = sqlite3.connect('database.db')
-    c = conn.cursor()    
-    c.execute("INSERT INTO users (username, email, password, phone) VALUES (?, ?, ?, ?)", (username, email, password, phone))
+    c = conn.cursor()
+    user_id = str(uuid.uuid4())    
+    c.execute("INSERT INTO users (id, username, email, password, phone) VALUES (?, ?, ?, ?, ?)", (user_id, username, email, password, phone))
     conn.commit()
-    user_id = c.lastrowid
     conn.close()
     return user_id
 
