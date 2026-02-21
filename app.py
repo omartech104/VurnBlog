@@ -7,6 +7,7 @@ from flask_wtf import CSRFProtect
 import secrets
 import uuid
 import html
+import interpreter
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
@@ -229,17 +230,34 @@ def upload_file():
         return redirect(url_for('login'))
     
     file = request.files.get('file')
-    if file and file.filename != '':
-        # Clean the filename to prevent path traversal
-        original_name = secure_filename(file.filename)
-        extension = original_name.rsplit('.', 1)[1].lower() if '.' in original_name else 'jpg'
+    
+    # 1. Basic presence check
+    if not file or file.filename == '':
+        flash('No file selected.', 'error')
+        return redirect(url_for('profile', user_id=session['user_id']))
+
+    if not interpreter.interpreter(file.filename):
+        flash('Invalid file type! Only JPG, PNG, and GIF are allowed.', 'error')
+        return redirect(url_for('profile', user_id=session['user_id']))
+
+    original_name = secure_filename(file.filename)
+    _, extension = os.path.splitext(original_name)
+    
+    new_filename = f"user_{session['user_id']}{extension.lower()}"
+    save_path = os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
+    
+    try:
+        file.save(save_path)
         
-        # Unique name based on user ID
-        new_filename = f"user_{session['user_id']}.{extension}"
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
+        conn = sqlite3.connect('database.db')
+        c = conn.cursor()
+        c.execute("UPDATE users SET profile_photo = ? WHERE id = ?", (new_filename, session['user_id']))
+        conn.commit()
+        conn.close()
         
-        # Update DB... (same as your code)
-        flash('Photo updated!', 'success')
+        flash('Profile photo updated successfully!', 'success')
+    except Exception as e:
+        flash(f'An error occurred during upload: {str(e)}', 'error')
         
     return redirect(url_for('profile', user_id=session['user_id']))
 

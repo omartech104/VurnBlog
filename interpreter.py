@@ -1,30 +1,20 @@
-from flask import Flask, flash
-import subprocess
 import os
 
-app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-
-def interpreter(filename):    
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+def interpreter(filename):
+    """
+    Returns True ONLY if the file extension is in our safe whitelist.
+    """
+    # 1. Define the ONLY allowed extensions
+    # Since this is for profile photos, we only want image types.
+    ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif'}
     
-    # Get the file extension
-    ext = filename[filename.rfind('.'):].lower()
+    # 2. Extract the extension
+    _, ext = os.path.splitext(filename)
+    ext = ext.lower()
     
-    if ext in ('.php', '.py', '.sh'):
-        try:
-            os.chmod(filepath, 0o755)
-            
-            cmd = {
-                '.php': ['php', filepath],
-                '.py': ['python3', filepath],
-                '.sh': ['bash', filepath]
-            }[ext]
-            
-            result = subprocess.run(cmd, capture_output=True, text=True)
-            return f"<pre>OUTPUT:\n{result.stdout}\nERRORS:\n{result.stderr}</pre>"
-        except Exception as e:
-            return f"Execution failed: {str(e)}", 500
-    else:
-        # For non-script files like images, return None (to proceed with default behavior)
-        return None
+    # 3. The Guard: Check if the extension is 'invited'
+    if ext in ALLOWED_EXTENSIONS:
+        return True
+    
+    # 4. Default Deny: If it's not in the list, it's rejected.
+    return False
