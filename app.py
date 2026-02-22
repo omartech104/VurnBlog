@@ -235,7 +235,7 @@ def upload_file():
     original_name = secure_filename(file.filename)
     _, extension = os.path.splitext(original_name)
     
-    new_filename = f"user_{session['user_id']}{extension.lower()}"
+    new_filename = f"user_{uuid.uuid4()}{extension.lower()}"
     save_path = os.path.join(app.config['UPLOAD_FOLDER'], new_filename)
     
     try:
