@@ -8,6 +8,7 @@ import secrets
 import uuid
 import html
 import interpreter
+from datetime import timedelta
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
@@ -15,6 +16,7 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload
 
 app.config.update(
+    PERMANENT_SESSION_LIFETIME=timedelta(minutes=30),
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_SAMESITE='Strict'
@@ -273,6 +275,7 @@ def login():
 
         # 2. Secure verification
         if user and check_password_hash(user['password'], password):
+            session.permanent = True
             session['user_id'] = user['id']
             session['session_id'] = str(uuid.uuid4()) # Your UUID library
             flash('Welcome back!', 'success')
