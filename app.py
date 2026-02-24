@@ -9,6 +9,8 @@ import uuid
 import html
 import interpreter
 from datetime import timedelta
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
@@ -23,7 +25,10 @@ app.config.update(
 )
 
 csrf = CSRFProtect(app)
-    
+limiter=Limiter(
+    get_remote_address,
+    app=app,
+)    
 # Initialize database
 def init_db():
     conn = sqlite3.connect('database.db')
@@ -259,6 +264,7 @@ def serve_file(filename):
 
 @app.route('/login', methods=['GET', 'POST'])
 @csrf.exempt
+@limiter.limit("5 per minute")  # Rate limit to prevent brute-force attacks
 def login():
     if request.method == 'POST':
         username = request.form['username']
